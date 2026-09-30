@@ -34,6 +34,7 @@ See the [plugin documentation](https://prolificdigital.notion.site/Ceros-WordPre
 * Main file renamed from `index.php` to `ceros-embed.php`; re-activate the plugin after updating.
 * Post type labels are translatable under the `ceros-embed` text domain.
 * License is now GPL-2.0-or-later. Requires WordPress 6.5+ and PHP 8.4+.
+* Security: the `[ceros-animation]` shortcode escapes its `title` attribute and the site URL (stored XSS by contributors).
 
 = 1.0.0 =
 * Initial release.

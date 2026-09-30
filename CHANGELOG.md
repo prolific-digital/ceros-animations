@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - License changed from GPL-3.0 to GPL-2.0-or-later (`LICENSE` now holds the GPL-2.0 text).
 - Requires WordPress 6.5+ and PHP 8.4+.
 
+### Security
+- `[ceros-animation]` escapes its `title` attribute and the site URL. A contributor could previously break out of the iframe's `title` attribute and inject script into any page that renders the shortcode (stored XSS).
+
 ## [1.0.0] - 2023-08-07
 
 ### Added
