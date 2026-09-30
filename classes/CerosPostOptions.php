@@ -65,14 +65,14 @@ class CerosPostOptions {
     <input type="file" id="ceros_file_upload_field" name="ceros_file_upload" accept=".zip">
     <p><i>Upload your .zip file above and be sure that your files are at the root of your zipped folder. </br></i><a href="https://prolificdigital.notion.site/Ceros-WordPress-Plugin-2165805d1e9f4fd5ad58ab64b5a5d473?pvs=4" target="_blank">View our documentation</a> for more details.</p>
 
-    <p><?php echo $file_url ? '<p><b>Current File: </b></p>' . esc_html($file_url . '/index.html') : '<p><b>No file uploaded yet.</b></p>'; ?></p>
+    <p><?php echo $file_url ? '<p><b>Current File: </b></p>' . esc_html( $file_url . '/index.html' ) : '<p><b>No file uploaded yet.</b></p>'; ?></p>
 
     <p><b>Shortcode:</b></p>
-    <pre><input type="text" readonly value="[ceros-animation id=&quot;<?php the_ID(); ?>&quot; type=&quot;scrolling&quot; title=&quot;<?php echo esc_attr(get_the_title()); ?>&quot;]" class="widefat"></pre>
+    <pre><input type="text" readonly value="[ceros-animation id=&quot;<?php the_ID(); ?>&quot; type=&quot;scrolling&quot; title=&quot;<?php echo esc_attr( get_the_title() ); ?>&quot;]" class="widefat"></pre>
 
     <?php if ($file_url) : ?>
       <p><b>Preview:</b></p>
-      <div style='position: relative;width: auto;padding: 0 0 56.25%;height: 0;top: 0;left: 0;bottom: 0;right: 0;margin: 0;border: 0 none' id="experience-5fa993f346f86" data-aspectRatio="1.77777778" data-mobile-aspectRatio="0.5625" data-tablet-aspectRatio="0.75"><iframe allowfullscreen src='<?php echo esc_url($file_url . '/index.html'); ?>' style='position: absolute;top: 0;left: 0;bottom: 0;right: 0;margin: 0;padding: 0;border: 0 none;height: 100%;width: 100%' frameborder='0' class='ceros-experience' title='2020 Health Plan Member Engagement Report'></iframe></div>
+      <div style='position: relative;width: auto;padding: 0 0 56.25%;height: 0;top: 0;left: 0;bottom: 0;right: 0;margin: 0;border: 0 none' id="experience-5fa993f346f86" data-aspectRatio="1.77777778" data-mobile-aspectRatio="0.5625" data-tablet-aspectRatio="0.75"><iframe allowfullscreen src='<?php echo esc_url( $file_url . '/index.html' ); ?>' style='position: absolute;top: 0;left: 0;bottom: 0;right: 0;margin: 0;padding: 0;border: 0 none;height: 100%;width: 100%' frameborder='0' class='ceros-experience' title='2020 Health Plan Member Engagement Report'></iframe></div>
       <script type="text/javascript" src="survey-report/assets/scroll-proxy.min.js" data-ceros-origin-domains=""></script>
     <?php endif; ?>
 
@@ -98,7 +98,7 @@ class CerosPostOptions {
   }
 
   public function handle_upload($post_id) {
-    if (!isset($_POST['ceros_file_upload_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['ceros_file_upload_nonce'])), basename(__FILE__))) {
+    if (!isset($_POST['ceros_file_upload_nonce']) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ceros_file_upload_nonce'] ) ), basename( __FILE__ ) )) {
       return;
     }
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
@@ -108,7 +108,7 @@ class CerosPostOptions {
       return;
     }
 
-    if (!isset($_FILES['ceros_file_upload']['error'], $_FILES['ceros_file_upload']['tmp_name'], $_FILES['ceros_file_upload']['name'])) {
+    if ( ! isset( $_FILES['ceros_file_upload']['error'], $_FILES['ceros_file_upload']['tmp_name'], $_FILES['ceros_file_upload']['name'] ) ) {
       return;
     }
 
@@ -160,7 +160,7 @@ class CerosPostOptions {
 
       if ($unzipped_file) {
         $file_path = $upload_dir['baseurl'] . '/ceros/' . $folder_name;
-        update_post_meta($post_id, '_ceros_file_upload', esc_url_raw($file_path));
+        update_post_meta($post_id, '_ceros_file_upload', esc_url_raw( $file_path ));
       }
     }
   }

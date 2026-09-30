@@ -57,6 +57,7 @@ $ceros_embed_post_id       = wp_insert_post(
 		'post_status'  => 'pending',
 	)
 );
+
 $ceros_embed_saved = get_post_field( 'post_content', $ceros_embed_post_id );
 $ceros_embed_html  = do_shortcode( $ceros_embed_saved );
 preg_match_all( '/<iframe[^>]*>/', $ceros_embed_html, $ceros_embed_iframes );
@@ -71,6 +72,7 @@ foreach ( $ceros_embed_iframes[0] as $ceros_embed_i => $ceros_embed_iframe ) {
 // 2. $site_url in data-ceros-origin-domains (site URL comes from an option / filter).
 $ceros_embed_site_filter = static fn() => 'https://example.test/"><script>alert(1)</script>';
 add_filter( 'site_url', $ceros_embed_site_filter );
+
 $ceros_embed_html = do_shortcode( '[ceros-animation id="1" title="Ok"]' );
 remove_filter( 'site_url', $ceros_embed_site_filter );
 preg_match( '/data-ceros-origin-domains=.{0,60}/', $ceros_embed_html, $ceros_embed_m );
