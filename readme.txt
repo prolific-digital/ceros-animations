@@ -35,6 +35,7 @@ See the [plugin documentation](https://prolificdigital.notion.site/Ceros-WordPre
 * Post type labels are translatable under the `ceros-embed` text domain.
 * License is now GPL-2.0-or-later. Requires WordPress 6.5+ and PHP 8.4+.
 * Security: the `[ceros-animation]` shortcode escapes its `title` attribute and the site URL (stored XSS by contributors).
+* Security: the Ceros meta box escapes the stored file URL and post title, and the file URL is sanitized on save.
 
 = 1.0.0 =
 * Initial release.

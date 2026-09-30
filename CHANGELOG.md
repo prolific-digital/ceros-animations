@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 - `[ceros-animation]` escapes its `title` attribute and the site URL. A contributor could previously break out of the iframe's `title` attribute and inject script into any page that renders the shortcode (stored XSS).
+- The Ceros meta box escapes the stored file URL and the post title it prints (a contributor-written title could break out of the shortcode field). The uploaded file URL is sanitized with `esc_url_raw()` before it is saved, the nonce is unslashed and sanitized before verification, and a save without an upload field no longer reads an undefined `$_FILES` entry.
 
 ## [1.0.0] - 2023-08-07
 
