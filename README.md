@@ -79,7 +79,7 @@ Let your website come alive with the immersive power of Ceros Embed!
 
 ## Contributing
 
-We welcome contributions to improve the WP Disable Comments plugin. To contribute:
+We welcome contributions to improve the Ceros Embed plugin. To contribute:
 
 1. Fork the project.
 2. Make your feature addition or bug fix.
