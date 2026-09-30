@@ -2,6 +2,8 @@
 
 namespace CerosEmbed;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Class CerosPostType
  */
