@@ -13,14 +13,33 @@ Unleash interactive creativity on your website with Ceros Embed. Elevate user en
 
 ---
 
+## Requirements
+
+| | |
+|---|---|
+| WordPress | 6.5+ |
+| PHP | 8.4+ |
+| Text domain | `ceros-embed` |
+| License | GPL-2.0-or-later |
+
 ## Installation
 
-1. Download the plugin zip file.
+1. Download `ceros-embed.zip` from a [GitHub release](https://github.com/prolific-digital/ceros-animations/releases).
 2. Log in to your WordPress dashboard.
 3. Navigate to **Plugins** > **Add New**.
 4. Click on the **Upload Plugin** button.
 5. Choose the downloaded zip file and click **Install Now**.
 6. After installation, click **Activate** to activate the Ceros Embed plugin.
+
+### Updates
+
+Updates are served by the Prolific Digital license server. Add the site's license key to `wp-config.php`:
+
+```php
+define( 'PROLIFIC_LICENSE_KEY_CEROS_EMBED', 'your-key' );
+```
+
+You can also supply the key with the `prolific_license_key` filter, which receives `( $key, 'ceros-embed' )`.
 
 ## Usage
 
@@ -40,6 +59,18 @@ Replace `THE_POST_ID` with the unique ID of your Ceros embed, `TYPE` with either
 
 For detailed information and guidelines, you can visit our [plugin documentation](https://prolificdigital.notion.site/Ceros-WordPress-Plugin-2165805d1e9f4fd5ad58ab64b5a5d473?pvs=4).
 
+## Development
+
+`vendor/` is not committed. The plugin's own classes load through Composer's autoloader, so a git checkout needs `composer install` before the plugin can be activated:
+
+```sh
+ddev exec -d /var/www/html/wp-content/plugins/ceros-animations composer install
+ddev exec -d /var/www/html/wp-content/plugins/ceros-animations composer lint
+ddev exec -d /var/www/html/wp-content/plugins/ceros-animations composer phpcs
+```
+
+To release: bump the version in the plugin header, `CEROS_EMBED_VERSION` and `readme.txt` `Stable tag`; add a `## [x.y.z] - YYYY-MM-DD` section to `CHANGELOG.md`; merge to `main` and push a `vx.y.z` tag. The shared release workflow runs `composer install --no-dev`, builds `ceros-embed.zip` and attaches it to a GitHub Release.
+
 ## Support
 
 For support, feedback, or feature requests, please [submit an issue](https://github.com/prolific-digital/ceros-embed/issues) on GitHub.
@@ -58,7 +89,7 @@ We welcome contributions to improve the WP Disable Comments plugin. To contribut
 
 ## License
 
-This project is licensed under the GPL-3.0 License.
+This project is licensed under GPL-2.0-or-later. See `LICENSE`.
 
 ---
 
