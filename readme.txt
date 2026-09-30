@@ -36,6 +36,7 @@ See the [plugin documentation](https://prolificdigital.notion.site/Ceros-WordPre
 * License is now GPL-2.0-or-later. Requires WordPress 6.5+ and PHP 8.4+.
 * Security: the `[ceros-animation]` shortcode escapes its `title` attribute and the site URL (stored XSS by contributors).
 * Security: the Ceros meta box escapes the stored file URL and post title, and the file URL is sanitized on save.
+* Security: uploading a Ceros zip requires the `upload_files` capability, and zips are checked entry by entry: only allowlisted static file types are extracted, and zips with scripts, hidden files, `..` paths or excessive size are rejected. `uploads/ceros/` gets an `.htaccess` that blocks PHP on Apache. Requires the PHP zip extension.
 
 = 1.0.0 =
 * Initial release.

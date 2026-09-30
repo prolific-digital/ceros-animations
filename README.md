@@ -47,6 +47,8 @@ When adding your Ceros animation, upload a .zip file containing the Ceros projec
 
 Please note that the plugin accepts .zip files. You can upload your project using and get the shortcode to embed it into any post, page, or custom post type.
 
+Uploading requires the `upload_files` capability (Authors and above) and the PHP zip extension. Only static file types are extracted (HTML, JS, CSS, JSON, images, fonts, audio/video including HLS `.ts`/`.m3u8`). A zip containing anything else, such as PHP files, hidden files like `.htaccess`, or `..` paths, is rejected with an admin notice. Symlinks, extensionless files and macOS metadata are skipped. Adjust the limits with the `ceros_embed_allowed_extensions`, `ceros_embed_max_files` and `ceros_embed_max_uncompressed_bytes` filters.
+
 To embed a Ceros project, use the following shortcode:
 
 ```
