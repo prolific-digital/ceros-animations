@@ -2,6 +2,8 @@
 
 namespace CerosEmbed;
 
+defined( 'ABSPATH' ) || exit;
+
 use CerosEmbed\CerosPostType;
 use CerosEmbed\CerosPostOptions;
 use CerosEmbed\CerosShortcode;

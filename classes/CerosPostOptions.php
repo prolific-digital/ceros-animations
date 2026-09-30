@@ -2,6 +2,8 @@
 
 namespace CerosEmbed;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Class CerosPostOptions
  */
@@ -17,6 +19,7 @@ class CerosPostOptions {
       $this, 'custom_upload_mimes'
     ));
     add_action('save_post_ceros', array($this, 'handle_upload'));
+    add_action( 'admin_notices', array( $this, 'show_upload_error' ) );
   }
 
   // Add the custom meta box for the "Ceros" custom post type
@@ -63,14 +66,14 @@ class CerosPostOptions {
     <input type="file" id="ceros_file_upload_field" name="ceros_file_upload" accept=".zip">
     <p><i>Upload your .zip file above and be sure that your files are at the root of your zipped folder. </br></i><a href="https://prolificdigital.notion.site/Ceros-WordPress-Plugin-2165805d1e9f4fd5ad58ab64b5a5d473?pvs=4" target="_blank">View our documentation</a> for more details.</p>
 
-    <p><?php echo $file_url ? '<p><b>Current File: </b></p>' . $file_url . '/index.html' : '<p><b>No file uploaded yet.</b></p>'; ?></p>
+    <p><?php echo $file_url ? '<p><b>Current File: </b></p>' . esc_html( $file_url . '/index.html' ) : '<p><b>No file uploaded yet.</b></p>'; ?></p>
 
     <p><b>Shortcode:</b></p>
-    <pre><input type="text" readonly value="[ceros-animation id=&quot;<?php the_ID(); ?>&quot; type=&quot;scrolling&quot; title=&quot;<?php the_title(); ?>&quot;]" class="widefat"></pre>
+    <pre><input type="text" readonly value="[ceros-animation id=&quot;<?php the_ID(); ?>&quot; type=&quot;scrolling&quot; title=&quot;<?php echo esc_attr( get_the_title() ); ?>&quot;]" class="widefat"></pre>
 
     <?php if ($file_url) : ?>
       <p><b>Preview:</b></p>
-      <div style='position: relative;width: auto;padding: 0 0 56.25%;height: 0;top: 0;left: 0;bottom: 0;right: 0;margin: 0;border: 0 none' id="experience-5fa993f346f86" data-aspectRatio="1.77777778" data-mobile-aspectRatio="0.5625" data-tablet-aspectRatio="0.75"><iframe allowfullscreen src='<?php echo $file_url; ?>/index.html' style='position: absolute;top: 0;left: 0;bottom: 0;right: 0;margin: 0;padding: 0;border: 0 none;height: 100%;width: 100%' frameborder='0' class='ceros-experience' title='2020 Health Plan Member Engagement Report'></iframe></div>
+      <div style='position: relative;width: auto;padding: 0 0 56.25%;height: 0;top: 0;left: 0;bottom: 0;right: 0;margin: 0;border: 0 none' id="experience-5fa993f346f86" data-aspectRatio="1.77777778" data-mobile-aspectRatio="0.5625" data-tablet-aspectRatio="0.75"><iframe allowfullscreen src='<?php echo esc_url( $file_url . '/index.html' ); ?>' style='position: absolute;top: 0;left: 0;bottom: 0;right: 0;margin: 0;padding: 0;border: 0 none;height: 100%;width: 100%' frameborder='0' class='ceros-experience' title='2020 Health Plan Member Engagement Report'></iframe></div>
       <script type="text/javascript" src="survey-report/assets/scroll-proxy.min.js" data-ceros-origin-domains=""></script>
     <?php endif; ?>
 
@@ -96,7 +99,7 @@ class CerosPostOptions {
   }
 
   public function handle_upload($post_id) {
-    if (!isset($_POST['ceros_file_upload_nonce']) || !wp_verify_nonce($_POST['ceros_file_upload_nonce'], basename(__FILE__))) {
+    if (!isset($_POST['ceros_file_upload_nonce']) || !wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ceros_file_upload_nonce'] ) ), basename( __FILE__ ) )) {
       return;
     }
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
@@ -106,58 +109,102 @@ class CerosPostOptions {
       return;
     }
 
-    $file = $_FILES['ceros_file_upload'];
+    if ( ! isset( $_FILES['ceros_file_upload']['error'], $_FILES['ceros_file_upload']['tmp_name'], $_FILES['ceros_file_upload']['name'] ) ) {
+      return;
+    }
 
-    if ($file['error'] === 0) {
-      $source = $_FILES['ceros_file_upload']['tmp_name'];
+    $upload_error = (int) $_FILES['ceros_file_upload']['error'];
+    if ( UPLOAD_ERR_NO_FILE === $upload_error ) {
+      return;
+    }
+    if ( UPLOAD_ERR_OK !== $upload_error ) {
+      $this->set_upload_error( __( 'The Ceros zip did not upload. It may be larger than the server allows.', 'ceros-embed' ) );
+      return;
+    }
 
-      // Set the custom uploads directory path
-      $upload_dir = wp_upload_dir();
-      wp_mkdir_p($upload_dir['basedir'] . '/ceros');
-      $custom_directory = $upload_dir['basedir'] . '/ceros';
+    /**
+     * Filters the capability needed to upload and extract a Ceros zip (checked with upload_files).
+     *
+     * A Ceros export is HTML and JavaScript served from this site's domain, so the default is
+     * unfiltered_html: Administrators and Editors on single sites, super admins only on multisite.
+     *
+     * @param string $capability Default 'unfiltered_html'.
+     */
+    $upload_capability = (string) apply_filters( 'ceros_embed_upload_capability', 'unfiltered_html' );
 
-      $filename = sanitize_file_name($_FILES['ceros_file_upload']['name']);
+    // Extracting a zip publishes HTML and JavaScript from the site's own uploads folder.
+    if ( ! current_user_can( 'upload_files' ) || ! current_user_can( $upload_capability ) ) {
+      $this->set_upload_error( __( 'Uploading Ceros exports needs the "unfiltered HTML" permission (Administrators and Editors on single sites), so the Ceros zip was ignored.', 'ceros-embed' ) );
+      return;
+    }
+
+    $source   = $_FILES['ceros_file_upload']['tmp_name']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Temporary upload path from PHP; checked with is_uploaded_file().
+    $filename = sanitize_file_name( $_FILES['ceros_file_upload']['name'] );
+    if ( 'zip' !== strtolower( pathinfo( $filename, PATHINFO_EXTENSION ) ) || ! is_uploaded_file( $source ) ) {
+      $this->set_upload_error( __( 'Upload a Ceros export as a .zip file.', 'ceros-embed' ) );
+      return;
+    }
+
+    // Check every entry before anything is written.
+    $entries = CerosZipExtractor::inspect( $source );
+    if ( is_wp_error( $entries ) ) {
+      $this->set_upload_error( $entries->get_error_message() );
+      return;
+    }
+
+    // Set the custom uploads directory path
+    $upload_dir = wp_upload_dir();
+    wp_mkdir_p($upload_dir['basedir'] . '/ceros');
+    $custom_directory = $upload_dir['basedir'] . '/ceros';
+    CerosZipExtractor::protect_directory( $custom_directory );
+
+    $destination = trailingslashit($custom_directory) . $filename;
+
+    // Increment the ZIP file name if one with the current name already exists
+    if (file_exists($destination)) {
+      $extension = pathinfo($filename, PATHINFO_EXTENSION);
       $base_filename = pathinfo($filename, PATHINFO_FILENAME);
-      $destination = trailingslashit($custom_directory) . $filename;
-
-      // Increment the ZIP file name if one with the current name already exists
-      if (file_exists($destination)) {
-        $extension = pathinfo($filename, PATHINFO_EXTENSION);
-        $base_filename = pathinfo($filename, PATHINFO_FILENAME);
-        $i = 1;
-        while (file_exists($destination)) {
-          $filename = $base_filename . '_' . $i . '.' . $extension;
-          $destination = trailingslashit($custom_directory) . $filename;
-          $i++;
-        }
+      $i = 1;
+      while (file_exists($destination)) {
+        $filename = $base_filename . '_' . $i . '.' . $extension;
+        $destination = trailingslashit($custom_directory) . $filename;
+        $i++;
       }
+    }
 
-      move_uploaded_file($source, $destination);
+    move_uploaded_file($source, $destination);
 
-      $folder_name = pathinfo($filename, PATHINFO_FILENAME);
-      $unzip_folder = trailingslashit($custom_directory) . $folder_name;
+    $folder_name = pathinfo($filename, PATHINFO_FILENAME);
+    $unzip_folder = trailingslashit($custom_directory) . $folder_name;
 
-      // Create a temp folder to initially unzip the files to
-      $temp_unzip_folder = trailingslashit($custom_directory) . 'temp_unzip';
-      wp_mkdir_p($temp_unzip_folder);
+    $extracted = CerosZipExtractor::extract( $destination, $entries, $unzip_folder );
+    if ( is_wp_error( $extracted ) ) {
+      $this->set_upload_error( $extracted->get_error_message() );
+      return;
+    }
 
-      WP_Filesystem();
-      $unzipped_file = unzip_file($destination, $temp_unzip_folder);
+    $file_path = $upload_dir['baseurl'] . '/ceros/' . $folder_name;
+    update_post_meta($post_id, '_ceros_file_upload', esc_url_raw( $file_path ));
+  }
 
-      // If there's a single directory inside temp_unzip_folder, move its contents to the desired destination
-      $dir_contents = scandir($temp_unzip_folder);
-      if (count($dir_contents) == 3) { // "." , "..", and the directory
-        $nested_folder = trailingslashit($temp_unzip_folder) . $dir_contents[2]; // The directory
-        rename($nested_folder, $unzip_folder);
-      }
+  /**
+   * Remember an upload error for the current user; shown after the save redirect.
+   *
+   * @param string $message Plain-text message.
+   */
+  private function set_upload_error( $message ) {
+    set_transient( 'ceros_embed_upload_error_' . get_current_user_id(), $message, MINUTE_IN_SECONDS );
+  }
 
-      // Remove the temp folder after the operations
-      rmdir($temp_unzip_folder);
-
-      if ($unzipped_file) {
-        $file_path = $upload_dir['baseurl'] . '/ceros/' . $folder_name;
-        update_post_meta($post_id, '_ceros_file_upload', $file_path);
-      }
+  /**
+   * Show (once) the upload error saved by set_upload_error().
+   */
+  public function show_upload_error() {
+    $key     = 'ceros_embed_upload_error_' . get_current_user_id();
+    $message = get_transient( $key );
+    if ( $message ) {
+      delete_transient( $key );
+      printf( '<div class="notice notice-error is-dismissible"><p>%s</p></div>', esc_html( $message ) );
     }
   }
 }
