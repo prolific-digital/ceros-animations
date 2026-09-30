@@ -122,9 +122,19 @@ class CerosPostOptions {
       return;
     }
 
-    // Extracting a zip writes files into the public uploads folder: require the same capability as the media library.
-    if ( ! current_user_can( 'upload_files' ) ) {
-      $this->set_upload_error( __( 'You do not have permission to upload files, so the Ceros zip was ignored.', 'ceros-embed' ) );
+    /**
+     * Filters the capability needed to upload and extract a Ceros zip (checked with upload_files).
+     *
+     * A Ceros export is HTML and JavaScript served from this site's domain, so the default is
+     * unfiltered_html: Administrators and Editors on single sites, super admins only on multisite.
+     *
+     * @param string $capability Default 'unfiltered_html'.
+     */
+    $upload_capability = (string) apply_filters( 'ceros_embed_upload_capability', 'unfiltered_html' );
+
+    // Extracting a zip publishes HTML and JavaScript from the site's own uploads folder.
+    if ( ! current_user_can( 'upload_files' ) || ! current_user_can( $upload_capability ) ) {
+      $this->set_upload_error( __( 'Uploading Ceros exports needs the "unfiltered HTML" permission (Administrators and Editors on single sites), so the Ceros zip was ignored.', 'ceros-embed' ) );
       return;
     }
 

@@ -24,6 +24,7 @@ See the [plugin documentation](https://prolificdigital.notion.site/Ceros-WordPre
 
 1. Upload the release zip from **Plugins > Add New > Upload Plugin** and activate it.
 2. Add a Ceros post, upload the export zip, and paste the shortcode where you want it.
+   Uploading needs the "unfiltered HTML" capability: Administrators and Editors on single sites, super admins only on multisite. Change it with the `ceros_embed_upload_capability` filter.
 3. To receive automatic updates, add your license key to `wp-config.php`:
    `define( 'PROLIFIC_LICENSE_KEY_CEROS_EMBED', 'your-key' );`
 
@@ -37,6 +38,7 @@ See the [plugin documentation](https://prolificdigital.notion.site/Ceros-WordPre
 * Security: the `[ceros-animation]` shortcode escapes its `title` attribute and the site URL (stored XSS by contributors).
 * Security: the Ceros meta box escapes the stored file URL and post title, and the file URL is sanitized on save.
 * Security: uploading a Ceros zip requires the `upload_files` capability, and zips are checked entry by entry: only allowlisted static file types are extracted, and zips with scripts, hidden files, `..` paths or excessive size are rejected. `uploads/ceros/` gets an `.htaccess` that blocks PHP on Apache. Requires the PHP zip extension.
+* Security: uploading a Ceros zip requires the `unfiltered_html` capability (Administrators and Editors on single sites; super admins only on multisite). Change it with the `ceros_embed_upload_capability` filter.
 
 = 1.0.0 =
 * Initial release.

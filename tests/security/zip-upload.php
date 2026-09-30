@@ -6,8 +6,8 @@
  *
  * Uploads crafted zips through the real edit screen (HTTP login, multipart
  * POST to post.php with the form's nonces) as a temporary contributor (no
- * upload_files) and a temporary author (upload_files), then checks what landed
- * on disk. It also checks the size/count limits in-process with lowered filters.
+ * upload_files), author (upload_files but not unfiltered_html) and editor
+ * (both), then checks what landed on disk. It also checks the size/count limits in-process with lowered filters.
  * The plugin is activated for the run if it is not active, and everything the
  * run creates (users, posts, files under uploads/ceros) is removed afterwards.
  *
@@ -278,7 +278,7 @@ $ceros_embed_zips  = array(
 
 // Temporary users.
 $ceros_embed_pass = wp_generate_password( 20, false );
-foreach ( array( 'contributor', 'author' ) as $ceros_embed_role ) {
+foreach ( array( 'contributor', 'author', 'editor' ) as $ceros_embed_role ) {
 	$ceros_embed_t['users'][ $ceros_embed_role ] = wp_insert_user(
 		array(
 			'user_login' => 'ceros-sec-' . $ceros_embed_role . '-' . wp_generate_password( 4, false, false ),
@@ -337,17 +337,22 @@ WP_CLI::line( '1. Contributor (no upload_files) uploads a legitimate export' );
 list( $ceros_embed_new, $ceros_embed_meta ) = ceros_embed_sec_run( 'contributor', $ceros_embed_zips['c-legit'] );
 ceros_embed_sec_expect( ! $ceros_embed_new && '' === $ceros_embed_meta, 'nothing is written and no URL is stored' );
 
+WP_CLI::line( '1b. Author (upload_files, no unfiltered_html) uploads a legitimate export' );
+list( $ceros_embed_new, $ceros_embed_meta, , , $ceros_embed_notice ) = ceros_embed_sec_run( 'author', $ceros_embed_zips['c-legit'] );
+ceros_embed_sec_expect( ! $ceros_embed_new && '' === $ceros_embed_meta, 'nothing is written and no URL is stored' );
+ceros_embed_sec_expect( str_contains( $ceros_embed_notice, 'unfiltered HTML' ), 'the notice names the "unfiltered HTML" permission' );
+
 foreach ( array( 'a-php', 'b-traversal', 'e-double-ext', 'f-dotfile' ) as $ceros_embed_key ) {
-	WP_CLI::line( '2. Author uploads ' . $ceros_embed_key );
-	list( $ceros_embed_new, $ceros_embed_meta, , $ceros_embed_outside ) = ceros_embed_sec_run( 'author', $ceros_embed_zips[ $ceros_embed_key ] );
+	WP_CLI::line( '2. Editor uploads ' . $ceros_embed_key );
+	list( $ceros_embed_new, $ceros_embed_meta, , $ceros_embed_outside ) = ceros_embed_sec_run( 'editor', $ceros_embed_zips[ $ceros_embed_key ] );
 	ceros_embed_sec_expect( ! ceros_embed_sec_extracted( $ceros_embed_new ) && ! $ceros_embed_outside && '' === $ceros_embed_meta, 'the zip is rejected and nothing is extracted' );
 }
 $ceros_embed_slip = array_filter( array( ABSPATH . 's3-zipslip-proof.txt', WP_CONTENT_DIR . '/s3-zipslip-proof.txt', dirname( $ceros_embed_t['ceros_dir'] ) . '/s3-zipslip-proof.txt', dirname( $ceros_embed_t['ceros_dir'] ) . '/s3-zipslip-proof2.html', $ceros_embed_t['ceros_dir'] . '/s3-zipslip-proof2.html' ), 'file_exists' );
 ceros_embed_sec_expect( ! $ceros_embed_slip, 'no path-traversal file exists anywhere' . ( $ceros_embed_slip ? ': ' . implode( ', ', $ceros_embed_slip ) : '' ) );
 
 foreach ( array( 'c-legit', 'd-real-export' ) as $ceros_embed_key ) {
-	WP_CLI::line( '3. Author uploads ' . $ceros_embed_key );
-	list( $ceros_embed_new, $ceros_embed_meta, $ceros_embed_pid ) = ceros_embed_sec_run( 'author', $ceros_embed_zips[ $ceros_embed_key ] );
+	WP_CLI::line( '3. Editor uploads ' . $ceros_embed_key );
+	list( $ceros_embed_new, $ceros_embed_meta, $ceros_embed_pid ) = ceros_embed_sec_run( 'editor', $ceros_embed_zips[ $ceros_embed_key ] );
 	ceros_embed_sec_expect( '' !== $ceros_embed_meta, 'the export is extracted and its URL stored' );
 	$ceros_embed_codes = array();
 	foreach ( array( '/index.html', '/assets/app.js', '/assets/app.css' ) as $ceros_embed_file ) {
